@@ -88,6 +88,16 @@ Then run a demo by ```python tools/demo.py```. If setup corectly, you will see a
 
 <p align="center"> <img src='docs/demo.gif' align="center" height="350px"> </p> 
 
+## Quick Test
+
+Modify the paths to the config and model files in [test_a_bin_file.py](tools/test_a_bin_file.py), then run:
+
+```bash
+python tools/test_a_bin_file.py /path/to/test/cloud.bin
+```
+
+A visualization figure will be saved to `demo/file_detection_test.png`.
+
 ## Advanced Installation  
 
 For more advanced usage, please refer to [INSTALL](docs/INSTALL.md) to set up more libraries needed for distributed training and sparse convolution.
