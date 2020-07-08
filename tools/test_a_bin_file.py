@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import open3d as o3d # need to be imported befor torch
 import torch
 from loguru import logger as logging
 
@@ -37,16 +38,26 @@ class CenterPointDector(object):
     @staticmethod
     def load_cloud_from_nuscenes_file(pc_f):
         logging.info('loading cloud from: {}'.format(pc_f))
-        return np.fromfile(pc_f, dtype=np.float32, count=-1)
+        num_features = 5
+        cloud = np.fromfile(pc_f, dtype=np.float32, count=-1).reshape([-1, num_features])
+        # last dimension should be the timestamp.
+        cloud[:, 4] = 0
+        return cloud
+
+    @staticmethod
+    def load_cloud_from_deecamp_file(pc_f):
+        logging.info('loading cloud from: {}'.format(pc_f))
+        num_features = 4
+        cloud = np.fromfile(pc_f, dtype=np.float32, count=-1).reshape([-1, num_features])
+        # last dimension should be the timestamp.
+        cloud = np.hstack((cloud, np.zeros([cloud.shape[0], 1])))
+        return cloud
 
     def predict_on_nuscenes_local_file(self, cloud_file):
 
         # load sample from file
-        num_features = 5
-        cloud = self.load_cloud_from_nuscenes_file(cloud_file)
-        self.points = cloud.reshape([-1, num_features])
-        # last dimension should be the timestamp.
-        self.points[:, 4] = 0
+        self.points = self.load_cloud_from_nuscenes_file(cloud_file)
+        # self.points = self.load_cloud_from_deecamp_file(cloud_file)
 
         # prepare input
         voxels, coords, num_points = self.voxel_generator.generate(self.points)
@@ -78,7 +89,7 @@ class CenterPointDector(object):
                 outputs[k] = v.to('cpu')
 
         # visualization
-        visual_detection(np.transpose(self.points), outputs, conf_th=0.4, show_plot=True)
+        visual_detection(np.transpose(self.points), outputs, conf_th=0.4, show_plot=True, show_3D=True)
 
 
 if __name__ == "__main__":

@@ -31,3 +31,4 @@ Shapely
 tqdm
 pyyaml
 requests
+alfred-py

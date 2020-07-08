@@ -6,12 +6,16 @@ import struct
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Tuple, List, Dict
+import math
 
 import cv2
 import numpy as np
 from matplotlib.axes import Axes
 from pyquaternion import Quaternion
-from matplotlib import pyplot as plt 
+from matplotlib import pyplot as plt
+import open3d as o3d
+from alfred.fusion.common import compute_3d_box_lidar_coords
+from alfred.vis.pointcloud.pointcloud_vis import draw_pcs_open3d
 
 
 def view_points(points: np.ndarray, view: np.ndarray, normalize: bool) -> np.ndarray:
@@ -312,7 +316,7 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     plt.close()
 
 
-def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False):
+def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False, show_3D=False):
     _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
     points = remove_close(points, radius=3)
     # points = view_points(points[:3, :], np.eye(4), normalize=False)
@@ -338,10 +342,15 @@ def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False):
 
     plt.savefig("demo/file_detection_test.png")
 
+    # Show plot
     if show_plot:
         plt.show()
     else:
         plt.close()
+
+    # Show 3D results
+    if show_3D:
+        visual_detections_open3d(points, boxes_est, conf_th)
 
 
 def visual_points(points, eval_range=35):
@@ -360,6 +369,7 @@ def visual_points(points, eval_range=35):
     plt.savefig("demo/file_points_test.png")
     plt.close()
 
+
 def remove_close(points, radius: float) -> None:
     """
     Removes point too close within a certain radius from origin.
@@ -370,3 +380,46 @@ def remove_close(points, radius: float) -> None:
     not_close = np.logical_not(np.logical_and(x_filt, y_filt))
     points = points[:, not_close]
     return points    
+
+
+def visual_detections_open3d(cloud, boxes, conf_th=0.5):
+
+    # colors for nuScenes
+    box_colors = [
+        [1, 0.5, 0],  # orange, car
+        [1, 0, 1],  # magenta, truck
+        [1, 0, 1],  # magenta, construction_vehicle
+        [1, 1, 1],  # white, bus
+        [1, 1, 1],  # white, trailer
+        [0.3, 0.3, 0.3],  # gray, barrier
+        [0, 1, 0],  # green, motorcycle
+        [0, 1, 0],  # green, bicycle
+        [1, 0, 0],  # red, pedestrian
+        [1, 0, 0]  # red, traffic_cone
+    ]
+
+    # add points
+    geometries = []
+    pcs = np.array(np.transpose(cloud)[:, :3])
+    pcobj = o3d.geometry.PointCloud()
+    pcobj.points = o3d.utility.Vector3dVector(pcs)
+    geometries.append(pcobj)
+
+    # add boxes
+    for box in boxes:
+        if box.score >= conf_th:
+            xyz = np.array([box.center])
+            hwl = np.array([box.wlh])[::-1]
+            r_y = [box.orientation.radians - math.pi / 2]  # need an additional rotation of -90 deg
+            pts3d = compute_3d_box_lidar_coords(xyz, hwl, angles=r_y, origin=(0.5, 0.5, 0.5), axis=2)[0]
+            lines = [[0, 1], [1, 2], [2, 3], [3, 0],
+                     [4, 5], [5, 6], [6, 7], [7, 4],
+                     [0, 4], [1, 5], [2, 6], [3, 7]]
+            colors = [box_colors[box.label] for i in range(len(lines))]
+            line_set = o3d.geometry.LineSet()
+            line_set.points = o3d.utility.Vector3dVector(pts3d)
+            line_set.lines = o3d.utility.Vector2iVector(lines)
+            line_set.colors = o3d.utility.Vector3dVector(colors)
+            geometries.append(line_set)
+
+    draw_pcs_open3d(geometries)
