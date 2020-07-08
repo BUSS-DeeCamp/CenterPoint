@@ -37,7 +37,7 @@ class CenterPointDector(object):
     @staticmethod
     def load_cloud_from_nuscenes_file(pc_f):
         logging.info('loading cloud from: {}'.format(pc_f))
-        return np.fromfile(pc_f, dtype=np.float32, count=-1).reshape([-1, 5])
+        return np.fromfile(pc_f, dtype=np.float32, count=-1)
 
     def predict_on_nuscenes_local_file(self, cloud_file):
 
@@ -78,7 +78,7 @@ class CenterPointDector(object):
                 outputs[k] = v.to('cpu')
 
         # visualization
-        visual_detection(np.transpose(self.points), outputs, conf_th=0.4)
+        visual_detection(np.transpose(self.points), outputs, conf_th=0.4, show_plot=True)
 
 
 if __name__ == "__main__":

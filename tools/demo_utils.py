@@ -312,7 +312,7 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     plt.close()
 
 
-def visual_detection(points, det, eval_range=35, conf_th=0.5):
+def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False):
     _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
     points = remove_close(points, radius=3)
     # points = view_points(points[:3, :], np.eye(4), normalize=False)
@@ -331,13 +331,17 @@ def visual_detection(points, det, eval_range=35, conf_th=0.5):
             box.render(ax, view=np.eye(4), colors=('b', 'b', 'b'), linewidth=1)
 
     print('valid_box_num: ', valid_box_num)
+    plt.axis('scaled')
     axes_limit = eval_range + 3  # Slightly bigger to include boxes that extend beyond the range.
     ax.set_xlim(-axes_limit, axes_limit)
     ax.set_ylim(-axes_limit, axes_limit)
-    plt.axis('off')
 
     plt.savefig("demo/file_detection_test.png")
-    plt.close()
+
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
 
 def visual_points(points, eval_range=35):
