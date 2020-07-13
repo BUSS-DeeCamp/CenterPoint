@@ -79,8 +79,13 @@ class CenterPointDector(object):
         )
 
         # predict
+        torch.cuda.synchronize()
+        tic = time.time()
         with torch.no_grad():
             outputs = self.net(self.inputs, return_loss=False)[0]
+
+        torch.cuda.synchronize()
+        logging.info("Prediction time: {:.3f} s".format(time.time() - tic))
 
         for k, v in outputs.items():
             if k not in [
