@@ -318,7 +318,7 @@ def train_detector(model, dataset, cfg, distributed=False, validate=False, logge
     ]
 
     total_steps = cfg.total_epochs * len(data_loaders[0])
-    # print(f"total_steps: {total_steps}")
+    print(f"total_steps: {total_steps}")
 
     if cfg.lr_config.type == "one_cycle":
         # build trainer

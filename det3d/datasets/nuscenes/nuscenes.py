@@ -51,7 +51,7 @@ class NuScenesDataset(PointCloudDataset):
         # print('self.nsweeps', self.nsweeps)
         assert self.nsweeps > 0, "At least input one sweep please!"
         # assert self.nsweeps > 0, "At least input one sweep please!"
-        print(self.nsweeps)
+        # print(self.nsweeps)
 
         self._info_path = info_path
         self._class_names = class_names
@@ -130,7 +130,8 @@ class NuScenesDataset(PointCloudDataset):
         for info in self._nusc_infos:
             gt_names = np.array(info["gt_names"])
             gt_boxes = info["gt_boxes"]
-            mask = np.array([n != "ignore" for n in gt_names], dtype=np.bool_)
+            # add
+            mask = np.array([n != "ignore" and n!='DontCare' for n in gt_names], dtype=np.bool_)
             gt_names = gt_names[mask]
             gt_boxes = gt_boxes[mask]
             # det_range = np.array([cls_range_map[n] for n in gt_names_mapped])

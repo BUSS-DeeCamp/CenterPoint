@@ -3,7 +3,8 @@ import warnings
 import numpy as np
 from functools import reduce
 
-import pycocotools.mask as maskUtils
+import pycocotools._mask as maskUtils
+# from det3d.datasets.kitti import kitti_common as kitti
 
 from pathlib import Path
 from copy import deepcopy
@@ -19,17 +20,21 @@ def _dict_select(dict_, inds):
         else:
             dict_[k] = v[inds]
 
-def read_file(path, tries=2, num_point_feature=4):
+#  xiugai
+def read_file(path, tries=2, num_point_feature=4,if_kitti=True):
     points = None
     try_cnt = 0
+    n=5
+    if if_kitti:
+        n = 4
     while points is None and try_cnt < tries:
         try_cnt += 1
         try:
             points = np.fromfile(path, dtype=np.float32)
             s = points.shape[0]
-            if s % 5 != 0:
-                points = points[: s - (s % 5)]
-            points = points.reshape(-1, 5)[:, :num_point_feature]
+            if s % n != 0:
+                points = points[: s - (s % n)]
+            points = points.reshape(-1, n)[:, :num_point_feature]
         except Exception:
             points = None
 
@@ -79,6 +84,12 @@ class LoadPointCloudFromFile(object):
             nsweeps = res["lidar"]["nsweeps"]
 
             lidar_path = Path(info["lidar_path"])
+            #. add
+            # import os
+            # basename = os.path.basename(lidar_path)
+            # base_path = r'I:\data\3D-detection\train_val_filter'
+            # lidar_path = os.path.join(base_path, basename)
+
             points = read_file(str(lidar_path))
 
             sweep_points_list = [points]
@@ -92,6 +103,8 @@ class LoadPointCloudFromFile(object):
 
             for i in np.random.choice(len(info["sweeps"]), nsweeps - 1, replace=False):
                 sweep = info["sweeps"][i]
+                # add
+                sweep['lidar_path']=lidar_path
                 points_sweep, times_sweep = read_sweep(sweep)
                 sweep_points_list.append(points_sweep)
                 sweep_times_list.append(times_sweep)
@@ -103,6 +116,32 @@ class LoadPointCloudFromFile(object):
             res["lidar"]["times"] = times
             res["lidar"]["combined"] = np.hstack([points, times])
 
+        elif self.type == 'KittiDataset':
+            pc_info = info["point_cloud"]
+            velo_path = Path(pc_info["velodyne_path"])
+            if not velo_path.is_absolute():
+                velo_path = (
+                    Path(res["metadata"]["image_prefix"]) / pc_info["velodyne_path"]
+                )
+            velo_reduced_path = (
+                velo_path.parent.parent
+                / (velo_path.parent.stem + "_reduced")
+                / velo_path.name
+            )
+            if velo_reduced_path.exists():
+                velo_path = velo_reduced_path
+            # import os
+            # basename = os.path.basename(velo_path)
+            # base_path = r'I:\data\3D-detection\train_val_filter'
+            # velo_path = os.path.join(base_path, basename)
+
+            # velo_path = str(velo_path).replace('train_val', 'train_val_filter')
+            points = np.fromfile(str(velo_path), dtype=np.float32, count=-1).reshape(
+                [-1, res["metadata"]["num_point_features"]]
+            )
+
+            res["lidar"]["points"] = points
+            # print(res)
         else:
             raise NotImplementedError
 
@@ -121,8 +160,57 @@ class LoadPointCloudAnnotations(object):
                 "boxes": info["gt_boxes"].astype(np.float32),
                 "names": info["gt_names"],
                 "tokens": info["gt_boxes_token"],
-                "velocities": info["gt_boxes_velocity"].astype(np.float32),
+                #"velocities": info["gt_boxes_velocity"].astype(np.float32),
             }
+        elif res["type"] == "KittiDataset":
+
+            calib = info["calib"]
+            calib_dict = {
+                "rect": calib["R0_rect"],
+                "Trv2c": calib["Tr_velo_to_cam"],
+                "P2": calib["P2"],
+            }
+            res["calib"] = calib_dict
+
+            def remove_dontcare(image_anno):
+                img_filtered_annotations = {}
+                relevant_annotation_indices = [
+                    i for i, x in enumerate(image_anno["name"]) if x != "DontCare"
+                ]
+                for key in image_anno.keys():
+                    img_filtered_annotations[key] = image_anno[key][relevant_annotation_indices]
+                return img_filtered_annotations
+
+            if "annos" in info:
+                annos = info["annos"]
+                # we need other objects to avoid collision when sample
+                annos = remove_dontcare(annos)
+                locs = annos["location"]
+                dims = annos["dimensions"]
+                rots = annos["rotation_y"]
+                gt_names = annos["name"]
+                gt_boxes = np.concatenate(
+                    [locs, dims, rots[..., np.newaxis]], axis=1
+                ).astype(np.float32)
+                calib = info["calib"]
+                # gt_boxes = box_np_ops.box_camera_to_lidar(
+                #     gt_boxes, calib["R0_rect"], calib["Tr_velo_to_cam"]
+                # )
+
+                # only center format is allowed. so we need to convert
+                # kitti [0.5, 0.5, 0] center to [0.5, 0.5, 0.5]
+                # box_np_ops.change_box3d_center_(
+                #     gt_boxes, [0.5, 0.5, 0], [0.5, 0.5, 0.5]
+                # )
+
+                res["lidar"]["annotations"] = {
+                    "boxes": gt_boxes,
+                    "names": gt_names,
+                }
+                res["cam"]["annotations"] = {
+                    "boxes": annos["bbox"],
+                    "names": gt_names,
+                }
         else:
             return NotImplementedError
 

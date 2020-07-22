@@ -34,6 +34,7 @@ def _points_to_voxel_reverse_kernel(
         failed = False
         for j in range(ndim):
             c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
+            # 去除无效的在定义边界范围外的点
             if c < 0 or c >= grid_size[j]:
                 failed = True
                 break

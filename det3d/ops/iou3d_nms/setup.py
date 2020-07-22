@@ -8,7 +8,18 @@ setup(
             'src/iou3d_nms.cpp',
             'src/iou3d_nms_kernel.cu',
         ],
-        extra_compile_args={'cxx': ['-g', '-I /usr/local/cuda/include'],
-                            'nvcc': ['-O2']})
+    include_dirs= ['C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include'],
+    extra_compile_args={'cxx': ['-g'],
+                            'nvcc': ['-O2'],
+                                                        }
+    #     extra_compile_args = {'include_dirs': ['C:\\Program Files (x86)\\Microsoft\ Visual\ Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include'],
+    # 'cxx': [],
+    # 'nvcc': [
+    #     '-D__CUDA_NO_HALF_OPERATORS__',
+    #     '-D__CUDA_NO_HALF_CONVERSIONS__',
+    #     '-D__CUDA_NO_HALF2_OPERATORS__',
+    # ]}
+                      )
     ],
-    cmdclass={'build_ext': BuildExtension})
+    cmdclass={'build_ext': BuildExtension}
+)

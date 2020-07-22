@@ -22,6 +22,7 @@ class Compose(object):
 
     def __call__(self, res, info):
         for t in self.transforms:
+            # print(t)
             res, info = t(res, info)
             if res is None:
                 return None

@@ -1,8 +1,8 @@
 # ------------------------------------------------------------------------------
 # Portions of this code are from
-# det3d (https://github.com/poodarchu/Det3D/tree/56402d4761a5b73acd23080f537599b0888cce07)
+# det3d (https://github.com/poodarchu/det3d)
 # Copyright (c) 2019 朱本金
-# Licensed under the MIT License
+# Licensed under the Apache License
 # ------------------------------------------------------------------------------
 
 import logging
@@ -1296,8 +1296,13 @@ class CenterHead(nn.Module):
             target_box = example['anno_box'][task_id]
             # reconstruct the anno_box from multiple reg heads
             if self.dataset == 'nuscenes':
-                preds_dict['anno_box'] = torch.cat((preds_dict['reg'], preds_dict['height'], preds_dict['dim'],
-                                                    preds_dict['vel'], preds_dict['rot']), dim=1)
+                if hasattr(preds_dict,'vel'):
+                    preds_dict['anno_box'] = torch.cat((preds_dict['reg'], preds_dict['height'], preds_dict['dim'],
+                                                        preds_dict['vel'], preds_dict['rot']), dim=1)
+                else:
+                    preds_dict['anno_box'] = torch.cat((preds_dict['reg'], preds_dict['height'], preds_dict['dim'],
+                                                    preds_dict['rot']), dim=1)
+
             else:
                 raise NotImplementedError()
 

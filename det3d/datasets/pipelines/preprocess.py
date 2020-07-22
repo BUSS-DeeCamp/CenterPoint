@@ -644,13 +644,22 @@ class AssignLabel(object):
 
             hms, anno_boxs, inds, masks, cats = [], [], [], [], []
 
+            hasvel = True
+            # if gt_dict['gt_boxes'][0][0].shape == 9:
+            #     hasvel = True
+
             for idx, task in enumerate(self.tasks):
                 hm = np.zeros((len(class_names_by_task[idx]), feature_map_size[1], feature_map_size[0]),
                               dtype=np.float32)
 
                 if res['type'] == 'NuScenesDataset':
                     # [reg, hei, dim, vx, vy, rots, rotc]
-                    anno_box = np.zeros((max_objs, 10), dtype=np.float32)
+                    if hasvel:
+                        anno_box = np.zeros((max_objs, 10), dtype=np.float32)
+                    else:
+                        # [reg, hei, dim, rots, rotc]
+                        anno_box = np.zeros((max_objs, 8), dtype=np.float32)
+
                 else:
                     raise NotImplementedError("Only Support nuScene for Now!")
 
@@ -700,17 +709,29 @@ class AssignLabel(object):
                         ind[new_idx] = y * feature_map_size[0] + x
                         mask[new_idx] = 1
 
-                        if res['type'] == 'NuScenesDataset': 
-                            vx, vy = gt_dict['gt_boxes'][idx][k][6:8]
-                            rot = gt_dict['gt_boxes'][idx][k][8]
-                            if not self.no_log:
-                                anno_box[new_idx] = np.concatenate(
-                                    (ct - (x, y), z, np.log(gt_dict['gt_boxes'][idx][k][3:6]),
-                                    np.array(vx), np.array(vy), np.sin(rot), np.cos(rot)), axis=None)
+                        if res['type'] == 'NuScenesDataset':
+                            rot = gt_dict['gt_boxes'][idx][k][-1]
+                            if gt_dict['gt_boxes'][idx][k].shape == 9:
+                                vx, vy = gt_dict['gt_boxes'][idx][k][6:8]
+
+                                if not self.no_log:
+                                    anno_box[new_idx] = np.concatenate(
+                                        (ct - (x, y), z, np.log(gt_dict['gt_boxes'][idx][k][3:6]),
+                                        np.array(vx), np.array(vy), np.sin(rot), np.cos(rot)), axis=None)
+                                else:
+                                    anno_box[new_idx] = np.concatenate(
+                                        (ct - (x, y), z, gt_dict['gt_boxes'][idx][k][3:6],
+                                        np.array(vx), np.array(vy), np.sin(rot), np.cos(rot)), axis=None)
                             else:
-                                anno_box[new_idx] = np.concatenate(
-                                    (ct - (x, y), z, gt_dict['gt_boxes'][idx][k][3:6],
-                                    np.array(vx), np.array(vy), np.sin(rot), np.cos(rot)), axis=None)
+                                # print(gt_dict['gt_boxes'][idx][k].shape)
+                                if not self.no_log:
+                                    anno_box[new_idx] = np.concatenate(
+                                        (ct - (x, y), z, np.log(gt_dict['gt_boxes'][idx][k][3:6]),
+                                         np.sin(rot), np.cos(rot)), axis=None)
+                                else:
+                                    anno_box[new_idx] = np.concatenate(
+                                        (ct - (x, y), z, gt_dict['gt_boxes'][idx][k][3:6],
+                                        np.sin(rot), np.cos(rot)), axis=None)
 
                         else:
                             raise NotImplementedError("Only Support KITTI and nuScene for Now!")

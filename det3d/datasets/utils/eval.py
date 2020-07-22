@@ -1,8 +1,8 @@
 import numpy as np
 import numba
 
-from det3d.ops.nms.nms_gpu import rotate_iou_gpu_eval
-from det3d.ops.nms.nms_gpu import inter
+# from det3d.ops.nms.nms_gpu import rotate_iou_gpu_eval
+# from det3d.ops.nms.nms_gpu import inter
 from det3d.core import box_np_ops
 
 

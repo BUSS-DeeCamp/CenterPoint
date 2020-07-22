@@ -2,7 +2,8 @@ from .builder import build_dataset
 
 # from .cityscapes import CityscapesDataset
 from .nuscenes import NuScenesDataset
-
+from .kitti import KittiDataset
+from .custom import PointCloudDataset
 # from .custom import CustomDataset
 from .dataset_wrappers import ConcatDataset, RepeatDataset
 
@@ -15,7 +16,9 @@ from .registry import DATASETS
 # from .xml_style import XMLDataset
 #
 __all__ = [
-    "CustomDataset",
+    # "CustomDataset",
+    "PointCloudDataset",
+    "KittiDataset",
     "GroupSampler",
     "DistributedGroupSampler",
     "build_dataloader",

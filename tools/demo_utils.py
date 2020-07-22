@@ -285,7 +285,7 @@ class Box:
         return copy.deepcopy(self)
 
 
-def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
+def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5, out_dir='demo'):
     _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
     points = remove_close(points, radius=3)
     points = view_points(points[:3, :], np.eye(4), normalize=False)
@@ -295,6 +295,10 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     ax.scatter(points[0, :], points[1, :], c=colors, s=0.2)
 
     boxes_gt = _second_det_to_nusc_box(gt_anno)
+    # add for deecamp data
+    det['box3d_lidar'][:, -1] = -det['box3d_lidar'][:, -1] - np.pi / 2
+    det['box3d_lidar'][:, [3,4]] = det['box3d_lidar'][:, [4,3]]
+
     boxes_est = _second_det_to_nusc_box(det)
 
     # Show GT boxes.
@@ -312,11 +316,10 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.5):
     ax.set_ylim(-axes_limit, axes_limit)
     plt.axis('off')
 
-    plt.savefig("demo/file%02d.png" % i)
+    plt.savefig(out_dir+"/file%02d.png" % i)
     plt.close()
 
-
-def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False, show_3D=False):
+def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False, show_3D=False, save_path=None):
     _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
     points = remove_close(points, radius=3)
     # points = view_points(points[:3, :], np.eye(4), normalize=False)
@@ -340,7 +343,8 @@ def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False, s
     ax.set_xlim(-axes_limit, axes_limit)
     ax.set_ylim(-axes_limit, axes_limit)
 
-    plt.savefig("demo/file_detection_test.png")
+    if save_path:
+        plt.savefig(save_path)
 
     # Show plot
     if show_plot:
@@ -351,37 +355,6 @@ def visual_detection(points, det, eval_range=35, conf_th=0.5, show_plot=False, s
     # Show 3D results
     if show_3D:
         visual_detections_open3d(points, boxes_est, conf_th)
-
-
-def visual_points(points, eval_range=35):
-    _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
-    points = remove_close(points, radius=3)
-
-    dists = np.sqrt(np.sum(points[:2, :] ** 2, axis=0))
-    colors = np.minimum(1, dists / eval_range)
-    ax.scatter(points[0, :], points[1, :], c=colors, s=0.2)
-
-    axes_limit = eval_range + 3  # Slightly bigger to include boxes that extend beyond the range.
-    ax.set_xlim(-axes_limit, axes_limit)
-    ax.set_ylim(-axes_limit, axes_limit)
-    plt.axis('off')
-
-    plt.savefig("demo/file_points_test.png")
-    plt.close()
-
-
-def remove_close(points, radius: float) -> None:
-    """
-    Removes point too close within a certain radius from origin.
-    :param radius: Radius below which points are removed.
-    """
-    x_filt = np.abs(points[0, :]) < radius
-    y_filt = np.abs(points[1, :]) < radius
-    not_close = np.logical_not(np.logical_and(x_filt, y_filt))
-    points = points[:, not_close]
-    return points    
-
-
 def visual_detections_open3d(cloud, boxes, conf_th=0.5):
 
     # colors for nuScenes
@@ -423,3 +396,13 @@ def visual_detections_open3d(cloud, boxes, conf_th=0.5):
             geometries.append(line_set)
 
     draw_pcs_open3d(geometries)
+def remove_close(points, radius: float) -> None:
+    """
+    Removes point too close within a certain radius from origin.
+    :param radius: Radius below which points are removed.
+    """
+    x_filt = np.abs(points[0, :]) < radius
+    y_filt = np.abs(points[1, :]) < radius
+    not_close = np.logical_not(np.logical_and(x_filt, y_filt))
+    points = points[:, not_close]
+    return points    

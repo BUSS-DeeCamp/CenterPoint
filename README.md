@@ -42,10 +42,10 @@ Three-dimensional objects are commonly represented as 3D boxes in a point-cloud.
 
 |         |  Split  |  MAP    |  NDS   |  FPS  |
 |---------|---------|---------|--------|-------|
-| PointPillars-512  |  Val    |  48.3   |  59.1  |  30.3 |   
-| VoxelNet-1024  |  Val    |  55.4   |  63.8  |  14.5 |    
+| PointPillars-512  |  Val    |  48.3   |  59.1  |  30.3 |
+| VoxelNet-1024  |  Val    |  55.4   |  63.8  |  14.5 |
 | VoxelNet-1440_dcn_flip  |  Val    |  59.1  |  67.1   | 2.2 |
-| VoxelNet-1440_dcn_flip   |  Test   |  60.3  |  67.3  | 2.2 |  
+| VoxelNet-1440_dcn_flip   |  Test   |  60.3  |  67.3  | 2.2 |
 
 #### 3D Tracking
 
@@ -97,6 +97,28 @@ python tools/test_a_bin_file.py /path/to/test/cloud.bin
 ```
 
 A visualization figure will be saved to `demo/file_detection_test.png`.
+
+### 测试某个文件夹下的所有bin文件
+
+打开[test_bin_files.py](tools/test_bin_files.py)文件做编辑，编辑项目路径，配置文件路径，模型参数路径，测试数据路径，输出文件路径。确认无误后，执行：
+
+```bash
+python tools/test_bin_files.py
+```
+
+结果输出在输出文件路径下。展示模型的检测结果（暂无GT）。
+
+### 利用centerpoint自带数据接口批量处理数据
+
+打开，[demo_test.py](tools/demo_test.py)，编辑配置文件路径，，模型参数路径，注意，在配置config文件中需要指定来数据集的根目录和数据标注pkl文件的位置。
+
+确认无误后，执行：
+
+```bash
+python tools/demo_test.py
+```
+
+结果输出在输出文件路径下。展示模型的检测结果（包含GT）。
 
 ## Advanced Installation  
 
