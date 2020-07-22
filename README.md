@@ -90,7 +90,7 @@ Then run a demo by ```python tools/demo.py```. If setup corectly, you will see a
 
 ## Quick Test
 
-Modify the paths to the config and model files in [test_a_bin_file.py](tools/test_a_bin_file.py#L88-L89), then run:
+Modify the paths to the config and model files in [test_a_bin_file.py](tools/test_a_bin_file.py), then run:
 
 ```bash
 python tools/test_a_bin_file.py /path/to/test/cloud.bin
