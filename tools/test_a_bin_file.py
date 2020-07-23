@@ -1,4 +1,5 @@
 import sys
+import time
 
 import numpy as np
 import open3d as o3d # need to be imported befor torch
@@ -11,7 +12,7 @@ from det3d.torchie import Config
 from tools.demo_utils import visual_detection
 
 
-class CenterPointDector(object):
+class CenterPointDetector(object):
     def __init__(self, config_file, model_file, calib_data=None):
         self.config_file = config_file
         self.model_file = model_file
@@ -53,7 +54,7 @@ class CenterPointDector(object):
         cloud = np.hstack((cloud, np.zeros([cloud.shape[0], 1])))
         return cloud
 
-    def predict_on_nuscenes_local_file(self, cloud_file):
+    def predict_on_local_file(self, cloud_file):
 
         # load sample from file
         self.points = self.load_cloud_from_nuscenes_file(cloud_file)
@@ -103,5 +104,5 @@ if __name__ == "__main__":
     else:
         config_file = 'configs/centerpoint/nusc_centerpoint_voxelnet_01voxel_circle_nms.py'
         model_file = 'work_dirs/centerpoint_voxel_1024_circle_nms/latest.pth'
-        detector = CenterPointDector(config_file, model_file)
-        detector.predict_on_nuscenes_local_file(sys.argv[1])
+        detector = CenterPointDetector(config_file, model_file)
+        detector.predict_on_local_file(sys.argv[1])
